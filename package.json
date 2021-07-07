@@ -1,8 +1,16 @@
 {
   "name": "hmac-sign-request",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sign requests with hmac",
   "main": "index.js",
+  "keywords": [
+    "sign",
+    "sign request",
+    "HMAC",
+    "HMAC256",
+    "express",
+    "middleware"
+  ],
   "scripts": {
     "build": "npm run clean && copy-files-from-to && tsc",
     "clean": "rimraf ./dist",
@@ -44,6 +52,10 @@
     {
       "from": "README.md",
       "to": "dist/README.md"
+    },
+    {
+      "from": "LICENSE",
+      "to": "dist/LICENSE"
     }
   ]
 }
