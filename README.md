@@ -13,7 +13,7 @@ import {signRequest} from 'hmac-sign-request';
 let req: Request; // initialize it
 
 signRequest(req, 'client', 'secret');
-console.log(req.headers.get('authorization'));
+console.log(req.header('authorization'));
 //HMAC-SHA256 credential=client t=1608218828237,v1=644a323b5586d369220fc5efbcaf8c4bae7d74782c44b7ff49945231f8cc9e84
 ```
 
