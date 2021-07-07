@@ -12,88 +12,91 @@ const CONFIG = {
   requestTTL: (process.env.AUTH_REQUEST_TTL ? parseInt(process.env.AUTH_REQUEST_TTL, 10) : 5) * Min2Mills,
 };
 
-export const hmacAuthMiddleware = (reloadClients: (clients: Map<string, string>) => Promise<void>) => async (request: any, response: any, nextFunc: Function): Promise<any> => {
-  const req = request as Request;
-  const res = response as Response;
-  const next = nextFunc as NextFunction;
+export const hmacAuthMiddleware = (reloadClients: (clients: Map<string, string>) => Promise<void>) => {
+  const reload = () => reloadClients(clients);
+  return async (request: any, response: any, nextFunc: Function): Promise<any> => {
+    const req = request as Request;
+    const res = response as Response;
+    const next = nextFunc as NextFunction;
 
-  if (!initialized) {
-    await reloadClients(clients);
-    setInterval(reloadClients, CONFIG.refreshPeriod);
-    initialized = true;
-  }
+    if (!initialized) {
+      await reload();
+      setInterval(reload, CONFIG.refreshPeriod);
+      initialized = true;
+    }
 
-  const auth = extractFromAuthorization(req.header('authorization'));
+    const auth = extractFromAuthorization(req.header('authorization'));
 
-  if (auth.type !== 'hmacSha256') {
-    return res.status(401).json({
-      error: true,
-      code: 'HMAC_UNSUPPORTED_AUTH',
-      message: `Unsupported auth type '${auth.type}'`,
-    });
-  }
+    if (auth.type !== 'hmacSha256') {
+      return res.status(401).json({
+        error: true,
+        code: 'HMAC_UNSUPPORTED_AUTH',
+        message: `Unsupported auth type '${auth.type}'`,
+      });
+    }
 
-  if (!auth.hmacSha256) {
-    return res.status(400).json({
-      error: true,
-      code: 'HMAC_AUTH_MALFORMED',
-      message: 'Missing auth type',
-    });
-  }
+    if (!auth.hmacSha256) {
+      return res.status(400).json({
+        error: true,
+        code: 'HMAC_AUTH_MALFORMED',
+        message: 'Missing auth type',
+      });
+    }
 
-  const { clientId } = auth.hmacSha256;
-  if (!clientId) {
-    return res.status(403).json({
-      error: true,
-      code: 'HMAC_AUTH_CLIENT',
-      message: 'Missing client',
-    });
-  }
+    const { clientId } = auth.hmacSha256;
+    if (!clientId) {
+      return res.status(403).json({
+        error: true,
+        code: 'HMAC_AUTH_CLIENT',
+        message: 'Missing client',
+      });
+    }
 
-  const { signature } = auth.hmacSha256;
-  if (!signature) {
-    return res.status(401).json({
-      error: true,
-      code: 'HMAC_AUTH_SIGNATURE',
-      message: 'Missing signature',
-    });
-  }
+    const { signature } = auth.hmacSha256;
+    if (!signature) {
+      return res.status(401).json({
+        error: true,
+        code: 'HMAC_AUTH_SIGNATURE',
+        message: 'Missing signature',
+      });
+    }
 
-  const secret = clients.get(clientId);
+    const secret = clients.get(clientId);
 
-  if (!secret) {
-    return res.status(421).json({
-      error: true,
-      code: 'HMAC_AUTH_CLIENT',
-      message: 'Unknown client',
-    });
-  }
+    if (!secret) {
+      return res.status(421).json({
+        error: true,
+        code: 'HMAC_AUTH_CLIENT',
+        message: 'Unknown client',
+      });
+    }
 
-  if (!auth.hmacSha256.timeStr || !auth.hmacSha256.time || !auth.hmacSha256.signature) {
-    return res.status(400).json();
-  }
+    if (!auth.hmacSha256.timeStr || !auth.hmacSha256.time || !auth.hmacSha256.signature) {
+      return res.status(400).json();
+    }
 
-  if (!validateRequest(req, secret, auth.hmacSha256.timeStr, auth.hmacSha256.signature, clientId)) {
-    return res.status(406).json({
-      error: true,
-      code: 'HMAC_AUTH_SIGNATURE',
-      message: 'Wrong signature',
-    });
-  }
+    if (!validateRequest(req, secret, auth.hmacSha256.timeStr, auth.hmacSha256.signature, clientId)) {
+      return res.status(406).json({
+        error: true,
+        code: 'HMAC_AUTH_SIGNATURE',
+        message: 'Wrong signature',
+      });
+    }
 
-  const now = new Date().getTime();
-  if (now > auth.hmacSha256.time + CONFIG.requestTTL) {
-    return res.status(400).json({
-      error: true,
-      code: 'HMAC_AUTH_TTL',
-      message: 'Request is too old',
-    });
-  }
+    const now = new Date().getTime();
+    if (now > auth.hmacSha256.time + CONFIG.requestTTL) {
+      return res.status(400).json({
+        error: true,
+        code: 'HMAC_AUTH_TTL',
+        message: 'Request is too old',
+      });
+    }
 
-  const { scope } = auth;
-  (req as any).hmacContext = {
-    clientId,
-    scope,
+    const { scope } = auth;
+    (req as any).hmacContext = {
+      clientId,
+      scope,
+    };
+    return next();
   };
-  return next();
 };
