@@ -5,6 +5,21 @@ contains express middleware to validate such signed requests.
 
 ## Usage
 
+### Add request headers
+```typescript
+import {setAuth} from 'hmac-sign-request';
+import axios from "axios";
+(async () => {
+  const res = await axios.get('https://somewhere.com',  {
+    headers: setAuth({
+      client: 'client',
+      secret: 'secret',
+    })
+  });
+  console.log(res);
+})();
+```
+
 ### Sign request
 
 ```typescript
@@ -30,7 +45,7 @@ console.log(createSignature('secret', {some: 'object'}));
 ```typescript
 import {createSignatureFromRequest} from 'hmac-sign-request';
 
-console.log(createSignatureFromRequest(req, 'secret', 'client'));
+console.log(createSignatureFromRequest(req, 'client', 'secret'));
 // t=1608218828237,v1=644a323b5586d369220fc5efbcaf8c4bae7d74782c44b7ff49945231f8cc9e84
 ```
 

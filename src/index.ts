@@ -3,10 +3,13 @@
  */
 
 export * from './hmacAuthMiddleware';
+export * from './types';
 export * from './utils';
 export * from './signature/createSignature';
 export * from './signature/createSignatureFromRequest';
 export * from './signature/extractFromAuthorization';
 export * from './signature/extractTimeSig';
+export * from './signature/setAuth';
+export * from './signature/signRequest';
 export * from './signature/validateRequest';
 export * from './signature/validateSignature';
