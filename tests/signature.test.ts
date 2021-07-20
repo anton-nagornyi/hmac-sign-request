@@ -1,6 +1,7 @@
 import { createSignature } from '../src/signature/createSignature';
 import { extractTimeSig } from '../src/signature/extractTimeSig';
 import { validateSignature } from '../src/signature/validateSignature';
+import { setAuth } from '../src/signature/setAuth';
 
 const RealDate = Date;
 // eslint-disable-next-line no-new-wrappers
@@ -38,4 +39,22 @@ it('signature validate', () => {
   const [, time, checkSig] = extractTimeSig(sig);
 
   expect(validateSignature(secret, data, time, checkSig)).toBeTruthy();
+});
+
+it('setAuth', () => {
+  const params = {
+    a: 1,
+    b: '1'
+  };
+
+  const headers = setAuth({
+    client: 'client',
+    secret: 'secret',
+    query: params,
+  });
+
+  const sig = headers.Authorization.split(' ')[2];
+  const [, time, checkSig] = extractTimeSig(sig);
+  console.log(validateSignature('secret', params, time, checkSig));
+  console.log(headers);
 });

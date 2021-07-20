@@ -1,6 +1,6 @@
 {
   "name": "hmac-sign-request",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Sign requests with hmac",
   "main": "index.js",
   "keywords": [
